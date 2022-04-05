@@ -38,13 +38,11 @@ impl Imagefile {
                     vec.push(PostProvisioner {
                         provisioner: LocalShell,
                         command: {
-                            let mut v = Vec::new();
-                            v.push(
+                            vec![
                                 "mv output/${var.vmname}-disk001.vmdk generated.vmdk".to_string(),
-                            );
-                            v.push("mv output/${var.vmname}.ovf generated.ovf".to_string());
-                            v.push("rm -rf output/".to_string());
-                            v
+                                "mv output/${var.vmname}.ovf generated.ovf".to_string(),
+                                "rm -rf output/".to_string(),
+                            ]
                         },
                     });
                     vec
@@ -64,7 +62,7 @@ impl Imagefile {
                 .iter()
                 .all(|p| !p.get_mountpoint().eq(&partition.get_mountpoint()))
             {
-                self.configuration.partitions.push(partition.clone())
+                self.configuration.partitions.push(partition.clone());
             }
         }
         if !self.configuration.partitions.is_empty() {
@@ -96,7 +94,7 @@ impl Imagefile {
             builder.append("\n");
         }
         builder.append("\n}\n");
-        builder.string().unwrap()
+        builder.string().unwrap_or_default()
     }
 
     #[must_use]

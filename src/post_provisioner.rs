@@ -15,8 +15,7 @@ pub struct PostProvisioner {
 impl PostProvisioner {
     #[must_use]
     pub fn new(provisioner: Types, command: &str) -> Self {
-        let mut vec = Vec::new();
-        vec.push(command.to_string());
+        let vec = vec![command.to_string()];
 
         Self {
             provisioner,
@@ -42,6 +41,6 @@ impl PostProvisioner {
             &utils::vec_to_string(&self.command, true),
         );
         utils::ident_and_append(&mut builder, "}\n", 2);
-        builder.string().unwrap()
+        builder.string().unwrap_or_default()
     }
 }

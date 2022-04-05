@@ -40,14 +40,14 @@ impl Partition {
 
     #[must_use]
     pub fn get_values(&self) -> Vec<(&'static str, String)> {
-        let mut fields = Vec::new();
-        fields.push(("filesystem", utils::quote(&self.filesystem)));
-        fields.push(("mountpoint", utils::quote(&self.mountpoint)));
-        fields.push(("name", utils::quote(&self.name)));
-        fields.push(("size", utils::quote(&self.size)));
-        fields.push(("start_sector", utils::quote(&self.start_sector)));
-        fields.push(("type", utils::quote(&self.partition_type)));
-        fields
+        vec![
+            ("filesystem", utils::quote(&self.filesystem)),
+            ("mountpoint", utils::quote(&self.mountpoint)),
+            ("name", utils::quote(&self.name)),
+            ("size", utils::quote(&self.size)),
+            ("start_sector", utils::quote(&self.start_sector)),
+            ("type", utils::quote(&self.partition_type)),
+        ]
     }
 
     #[must_use]
@@ -55,10 +55,10 @@ impl Partition {
         let mut builder = Builder::default();
         utils::ident_and_append(&mut builder, "image_partitions {\n", 2);
         for (key, value) in &self.get_values() {
-            utils::add_indented_aligned_key_value(&mut builder, 4, 20, key, &value);
+            utils::add_indented_aligned_key_value(&mut builder, 4, 20, key, value);
         }
         utils::ident_and_append(&mut builder, "}\n", 2);
-        builder.string().unwrap()
+        builder.string().unwrap_or_default()
     }
 
     #[must_use]
@@ -73,7 +73,7 @@ impl Partition {
 
     #[must_use]
     pub fn get_start(&self) -> usize {
-        self.start_sector.parse::<usize>().unwrap()
+        self.start_sector.parse::<usize>().unwrap_or_default()
     }
 }
 

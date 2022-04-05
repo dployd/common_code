@@ -80,13 +80,11 @@ impl Default for X86Preamble {
 
 impl Preamble for X86Preamble {
     fn get_variables(&self) -> Vec<(String, String, String)> {
-        let mut vec = Vec::new();
-        vec.push((
+        vec![(
             String::from("vmname"),
             String::from("string"),
             self.vm_name.clone(),
-        ));
-        vec
+        )]
     }
 
     fn get_packer_plugin(&self) -> String {
@@ -94,36 +92,37 @@ impl Preamble for X86Preamble {
     }
 
     fn get_values(&self) -> Vec<(&'static str, String)> {
-        let mut fields = Vec::new();
-        fields.push((
-            "boot_command",
-            utils::vec_to_string(&self.boot_command, true),
-        ));
-        fields.push(("boot_wait", utils::quote(&self.boot_wait)));
-        fields.push(("disk_size", self.disk_size.to_string()));
-        fields.push((
-            "guest_additions_mode",
-            utils::quote(&self.guest_additions_mode),
-        ));
-        fields.push(("guest_os_type", utils::quote(&self.guest_os_type)));
-        fields.push(("headless", self.headless.to_string()));
-        if !self.preseed_file.is_empty() {
+        let mut fields = vec![
+            (
+                "boot_command",
+                utils::vec_to_string(&self.boot_command, true),
+            ),
+            ("boot_wait", utils::quote(&self.boot_wait)),
+            ("disk_size", self.disk_size.to_string()),
+            (
+                "guest_additions_mode",
+                utils::quote(&self.guest_additions_mode),
+            ),
+            ("guest_os_type", utils::quote(&self.guest_os_type)),
+            ("headless", self.headless.to_string()),
+            (
+                "iso_checksum",
+                utils::quote(&format!(
+                    "{}:{}",
+                    &self.iso_checksum_type, &self.iso_checksum
+                )),
+            ),
+            ("iso_url", utils::quote(&self.iso_url)),
+            ("shutdown_command", utils::quote(&self.shutdown_command)),
+            ("ssh_password", utils::quote(&self.ssh_password)),
+            ("ssh_username", utils::quote(&self.ssh_username)),
+            ("ssh_wait_timeout", utils::quote(&self.ssh_wait_timeout)),
+            ("vm_name", utils::quote(&self.vm_name)),
+            ("output_directory", utils::quote(&self.output_directory)),
+        ];
+        if self.preseed_file.is_empty() {
             fields.push(("http_directory", utils::quote(&self.http_directory)));
         }
-        fields.push((
-            "iso_checksum",
-            utils::quote(&format!(
-                "{}:{}",
-                &self.iso_checksum_type, &self.iso_checksum
-            )),
-        ));
-        fields.push(("iso_url", utils::quote(&self.iso_url)));
-        fields.push(("shutdown_command", utils::quote(&self.shutdown_command)));
-        fields.push(("ssh_password", utils::quote(&self.ssh_password)));
-        fields.push(("ssh_username", utils::quote(&self.ssh_username)));
-        fields.push(("ssh_wait_timeout", utils::quote(&self.ssh_wait_timeout)));
-        fields.push(("vm_name", utils::quote(&self.vm_name)));
-        fields.push(("output_directory", utils::quote(&self.output_directory)));
         fields
     }
 

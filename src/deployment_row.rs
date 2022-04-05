@@ -1,8 +1,9 @@
-use crate::deployment::Deployment;
-use crate::utils::get_cell_content_of_date;
 use chrono::NaiveDateTime;
 use prettytable::Cell;
 use serde::{Deserialize, Serialize};
+
+use crate::deployment::Deployment;
+use crate::utils::get_cell_content_of_date;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DeploymentRow {
@@ -29,16 +30,20 @@ impl DeploymentRow {
 
     #[must_use]
     pub fn get_cells(&self) -> Vec<Cell> {
-        let mut cells: Vec<prettytable::Cell> = Vec::new();
-        cells.push(Cell::new(&self.id.unwrap().to_string()));
-        cells.push(Cell::new(&self.name));
-        cells.push(get_cell_content_of_date(&self.start));
-        cells.push(get_cell_content_of_date(&self.end));
-        cells.push(Cell::new(&self.owner));
-        match self.services {
-            Some(number) => cells.push(Cell::new(&number.to_string())),
-            None => cells.push(Cell::new("\u{2014}")),
-        }
-        cells
+        let number = match self.services {
+            Some(number) => number.to_string(),
+            None => String::from("\u{2014}"),
+        };
+        vec![
+            self.id.unwrap_or_default().to_string().as_str(),
+            self.name.as_str(),
+            get_cell_content_of_date(&self.start).as_str(),
+            get_cell_content_of_date(&self.end).as_str(),
+            self.owner.as_str(),
+            number.as_str(),
+        ]
+        .into_iter()
+        .map(Cell::new)
+        .collect()
     }
 }

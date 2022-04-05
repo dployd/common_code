@@ -17,10 +17,9 @@ pub struct ArmPreamble {
 impl ArmPreamble {
     #[must_use]
     pub fn new() -> Self {
-        let mut vec = Vec::new();
-        vec.push(String::from(
+        let vec = vec![String::from(
             "PATH=/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
-        ));
+        )];
         ArmPreamble {
             image_build_method: String::from("reuse"),
             image_path: String::from("generated.img"),
@@ -47,23 +46,23 @@ impl Preamble for ArmPreamble {
     }
 
     fn get_values(&self) -> Vec<(&'static str, String)> {
-        let mut fields = Vec::new();
-        fields.push(("image_build_method", utils::quote(&self.image_build_method)));
-        fields.push(("image_path", utils::quote(&self.image_path)));
-        fields.push(("image_size", utils::quote(&self.image_size)));
-        fields.push(("image_type", utils::quote(&self.image_type)));
-        fields.push((
-            "image_chroot_env",
-            utils::vec_to_string(&self.image_chroot_env, true),
-        ));
-        fields.push(("file_checksum_type", utils::quote(&self.file_checksum_type)));
-        fields.push(("file_checksum_url", utils::quote(&self.file_checksum_url)));
-        fields.push((
-            "file_target_extension",
-            utils::quote(&self.file_target_extension),
-        ));
-        fields.push(("file_urls", utils::vec_to_string(&self.file_urls, true)));
-        fields
+        vec![
+            ("image_build_method", utils::quote(&self.image_build_method)),
+            ("image_path", utils::quote(&self.image_path)),
+            ("image_size", utils::quote(&self.image_size)),
+            ("image_type", utils::quote(&self.image_type)),
+            (
+                "image_chroot_env",
+                utils::vec_to_string(&self.image_chroot_env, true),
+            ),
+            ("file_checksum_type", utils::quote(&self.file_checksum_type)),
+            ("file_checksum_url", utils::quote(&self.file_checksum_url)),
+            (
+                "file_target_extension",
+                utils::quote(&self.file_target_extension),
+            ),
+            ("file_urls", utils::vec_to_string(&self.file_urls, true)),
+        ]
     }
 
     fn parse_base_image(&mut self, line: &str) -> Result<(), &'static str> {
@@ -73,8 +72,7 @@ impl Preamble for ArmPreamble {
             if parts.len() == 2 {
                 file_checksum_type = String::from(parts[1]);
             }
-            let mut file_urls = Vec::new();
-            file_urls.push(String::from(parts[0]));
+            let file_urls = vec![String::from(parts[0])];
             let file_checksum_url = format!("{}.{}", parts[0], file_checksum_type);
             let file_target_extension = line.split('.').last().unwrap().to_string();
             self.file_checksum_type = file_checksum_type;

@@ -67,7 +67,9 @@ pub fn get_mount_order(output: &str) -> Vec<Mountpoint> {
                 }
                 Some(Mountpoint::new(
                     path_vec.len(),
-                    vec[0].split('p').collect::<Vec<&str>>()[2].parse().unwrap(),
+                    vec[0].split('p').collect::<Vec<&str>>()[2]
+                        .parse()
+                        .unwrap_or_default(),
                     path,
                 ))
             } else {
@@ -75,7 +77,7 @@ pub fn get_mount_order(output: &str) -> Vec<Mountpoint> {
             }
         })
         .collect::<Vec<Mountpoint>>();
-    list.sort_by(|a, b| Mountpoint::sort(a, b));
+    list.sort_by(Mountpoint::sort);
     list
 }
 

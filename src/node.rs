@@ -1,8 +1,10 @@
-use crate::architecture::Architecture;
-use crate::logsource::LogSource;
+use std::collections::HashMap;
+
 use config::Value;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
+use crate::architecture::Architecture;
+use crate::logsource::LogSource;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Node {
@@ -26,45 +28,50 @@ impl Node {
     ) -> Self {
         Node {
             id,
-            name: hash.get("name").unwrap().to_owned().into_str().unwrap(),
+            name: hash
+                .get("name")
+                .unwrap_or(&Value::from("node"))
+                .clone()
+                .into_str()
+                .unwrap_or_default(),
             tftp_prefix: hash
                 .get("tftp-prefix")
-                .unwrap()
-                .to_owned()
+                .unwrap_or(&Value::from("00-00-00-00-00-00"))
+                .clone()
                 .into_str()
-                .unwrap(),
+                .unwrap_or_default(),
             mac_address: hash
                 .get("mac-address")
-                .unwrap()
-                .to_owned()
+                .unwrap_or(&Value::from("00-00-00-00-00-00"))
+                .clone()
                 .into_str()
-                .unwrap(),
+                .unwrap_or_default(),
             ipv4_address: hash
                 .get("ipv4-address")
-                .unwrap()
-                .to_owned()
+                .unwrap_or(&Value::from("0.0.0.0"))
+                .clone()
                 .into_str()
-                .unwrap(),
+                .unwrap_or_default(),
             serial_number: hash
                 .get("serial-number")
-                .unwrap()
-                .to_owned()
+                .unwrap_or(&Value::from("00-00-00-00-00-00"))
+                .clone()
                 .into_str()
-                .unwrap(),
+                .unwrap_or_default(),
             log_inputs,
             architecture: Architecture::parse(
                 &hash
                     .get("architecture")
-                    .unwrap()
-                    .to_owned()
+                    .unwrap_or(&Value::from("ARM64"))
+                    .clone()
                     .into_str()
-                    .unwrap(),
+                    .unwrap_or_default(),
             )
-            .unwrap(),
+            .unwrap_or(Architecture::ARM64),
             pxe: if hash.contains_key("pxe") {
                 hash.get("pxe")
-                    .unwrap()
-                    .to_owned()
+                    .unwrap_or(&Value::from("false"))
+                    .clone()
                     .into_bool()
                     .unwrap_or(false)
             } else {

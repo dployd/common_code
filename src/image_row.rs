@@ -19,18 +19,17 @@ impl ImageRow {
 
     #[must_use]
     pub fn get_cells(&self) -> Vec<Cell> {
-        let mut cells: Vec<prettytable::Cell> = Vec::new();
-        cells.push(Cell::new(&self.filename));
+        let mut cells = vec![self.filename.as_str()];
         match &self.configuration {
             Some(config) => {
-                cells.push(Cell::new(config.architecture.get_name()));
-                cells.push(Cell::new(if config.on_device { "yes" } else { "no" }));
+                cells.push(config.architecture.get_name());
+                cells.push(if config.on_device { "yes" } else { "no" });
             }
             None => {
-                cells.push(Cell::new("\u{2014}"));
-                cells.push(Cell::new("\u{2014}"));
+                cells.push("\u{2014}");
+                cells.push("\u{2014}");
             }
         }
-        cells
+        cells.into_iter().map(Cell::new).collect()
     }
 }

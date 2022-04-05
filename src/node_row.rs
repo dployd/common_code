@@ -1,7 +1,7 @@
-use crate::node::Node;
-use crate::utils::get_cell_content_of_string;
 use prettytable::Cell;
 use serde::{Deserialize, Serialize};
+
+use crate::node::Node;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NodeRow {
@@ -40,23 +40,29 @@ impl NodeRow {
 
     #[must_use]
     pub fn get_cells(&self) -> Vec<Cell> {
-        let mut cells: Vec<prettytable::Cell> = Vec::new();
-        cells.push(get_cell_content_of_string(&self.id));
-        cells.push(get_cell_content_of_string(&self.name));
-        cells.push(get_cell_content_of_string(&self.mac_address));
-        cells.push(get_cell_content_of_string(&self.tftp_prefix));
-        cells.push(get_cell_content_of_string(&self.serial_number));
-        if let Some(is_up) = self.status {
-            cells.push(Cell::new(if is_up { "up" } else { "down" }));
-        } else {
-            cells.push(Cell::new("\u{2014}"));
-        }
-        for value in [&self.hostname, &self.ipv4_address].to_vec() {
-            cells.push(get_cell_content_of_string(
-                value.as_ref().unwrap_or(&String::from("\u{2014}")),
-            ));
-        }
-        cells.push(Cell::new(if self.usable { "yes" } else { "no" }));
-        cells
+        let empty = String::from("\u{2014}");
+        let hostname = self.hostname.as_ref().unwrap_or(&empty);
+        let ipv4_address = self.ipv4_address.as_ref().unwrap_or(&empty);
+        let vec = vec![
+            self.id.as_str(),
+            self.name.as_str(),
+            self.mac_address.as_str(),
+            self.tftp_prefix.as_str(),
+            self.serial_number.as_str(),
+            match self.status {
+                Some(is_up) => {
+                    if is_up {
+                        "up"
+                    } else {
+                        "down"
+                    }
+                }
+                None => "\u{2014}",
+            },
+            hostname.as_str(),
+            ipv4_address.as_str(),
+            if self.usable { "yes" } else { "no" },
+        ];
+        vec.into_iter().map(Cell::new).collect()
     }
 }

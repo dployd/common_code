@@ -1,8 +1,9 @@
-use crate::deployment::Deployment;
-use crate::service::Service;
 use chrono::NaiveDateTime;
 use rusqlite::Row;
 use serde::{Deserialize, Serialize};
+
+use crate::deployment::Deployment;
+use crate::service::Service;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq)]
 pub enum Type {
@@ -45,16 +46,19 @@ impl Task {
     }
 
     #[must_use]
-    pub fn from_row(deployment: Deployment, service: Option<Service>, row: &Row) -> Self {
-        Task {
-            deployment: Some(deployment),
-            service,
-            task_type: from_db_to_type(row.get(3).unwrap()),
-            parameters: row.get(4).unwrap(),
-            during_deployment: row.get(5).unwrap(),
-            start: row.get(6).unwrap(),
-            end: row.get(7).unwrap(),
+    pub fn from_row(deployment: Deployment, service: Option<Service>, row: &Row) -> Option<Self> {
+        if row.column_count() >= 7 {
+            return Some(Task {
+                deployment: Some(deployment),
+                service,
+                task_type: from_db_to_type(row.get(3).unwrap_or(usize::MIN)),
+                parameters: row.get(4).unwrap_or_else(|_| String::from("")),
+                during_deployment: row.get(5).unwrap_or(false),
+                start: row.get(6).unwrap_or(None),
+                end: row.get(7).unwrap_or(None),
+            });
         }
+        None
     }
 }
 

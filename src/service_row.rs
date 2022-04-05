@@ -1,8 +1,9 @@
-use crate::service::Service;
-use crate::utils::{get_cell_content_of_date, get_cell_content_of_option};
 use chrono::NaiveDateTime;
 use prettytable::Cell;
 use serde::{Deserialize, Serialize};
+
+use crate::service::Service;
+use crate::utils::{get_cell_content_of_date, get_cell_content_of_option};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ServiceRow {
@@ -22,7 +23,7 @@ impl ServiceRow {
     #[must_use]
     pub fn new(service: &Service, node: String, deployment: String) -> Self {
         ServiceRow {
-            id: service.id.unwrap(),
+            id: service.id.unwrap_or(0),
             name: service.name.clone(),
             image: service.image.clone(),
             node,
@@ -37,17 +38,21 @@ impl ServiceRow {
 
     #[must_use]
     pub fn get_cells(&self) -> Vec<Cell> {
-        let mut cells: Vec<prettytable::Cell> = Vec::new();
-        cells.push(Cell::new(&self.id.to_string()));
-        cells.push(Cell::new(&self.name));
-        cells.push(Cell::new(&self.image));
-        cells.push(Cell::new(&self.node));
-        cells.push(Cell::new(&self.deployment));
-        cells.push(Cell::new(&self.hostname));
-        cells.push(get_cell_content_of_option(&self.ipv4_address));
-        cells.push(get_cell_content_of_date(&self.start));
-        cells.push(get_cell_content_of_date(&self.end));
-        cells.push(Cell::new(&self.replicas.to_string()));
-        cells
+        let id = self.id.to_string();
+        let replicas = self.replicas.to_string();
+        let ipv4_address = get_cell_content_of_option(&self.ipv4_address);
+        let start = get_cell_content_of_date(&self.start);
+        let vec = vec![
+            id.as_str(),
+            &self.name,
+            &self.image,
+            &self.node,
+            &self.deployment,
+            &self.hostname,
+            ipv4_address.as_str(),
+            start.as_str(),
+            replicas.as_str(),
+        ];
+        vec.iter().map(|c| Cell::new(c)).collect()
     }
 }

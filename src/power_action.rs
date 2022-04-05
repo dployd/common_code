@@ -51,10 +51,11 @@ impl PowerAction {
 
     #[must_use]
     pub fn execute(self) -> bool {
-        let child = Command::new(self.command)
-            .args(self.arguments)
-            .spawn()
-            .unwrap();
-        child.wait_with_output().unwrap().status.success()
+        if let Ok(child) = Command::new(self.command).args(self.arguments).spawn() {
+            if let Ok(result) = child.wait_with_output() {
+                return result.status.success();
+            }
+        }
+        false
     }
 }

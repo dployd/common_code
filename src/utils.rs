@@ -1,13 +1,15 @@
-use chrono::NaiveDateTime;
-use colored::Colorize;
-use names::Generator;
-use prettytable::Cell;
 use std::fs::OpenOptions;
 use std::io;
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, ErrorKind, Write};
 use std::path::Path;
 use std::process::Command;
-use std::{format, fs, panic, print, println, str, usize};
+use std::{format, fs, print, println, str, usize};
+
+use chrono::NaiveDateTime;
+use colored::Colorize;
+use itertools::Itertools;
+use names::Generator;
+use prettytable::Cell;
 use string_builder::Builder;
 
 #[must_use]
@@ -18,14 +20,15 @@ pub fn vec_to_string(vec: &[String], quotes: bool) -> String {
         if quotes {
             builder.append(quote(&item.to_string()));
         } else {
-            builder.append(item.as_bytes())
+            builder.append(item.as_bytes());
         }
         if i < vec.len() - 1 {
-            builder.append(", ")
+            builder.append(", ");
         }
     }
     builder.append("]");
-    builder.string().unwrap()
+
+    builder.string().unwrap_or_default()
 }
 
 fn align_content(preferred_size: usize, content_size: usize) -> usize {
@@ -70,7 +73,10 @@ pub fn quote(value: &str) -> String {
 #[must_use]
 pub fn get_random_name() -> String {
     let mut generator = Generator::default();
-    generator.next().unwrap()
+    if let Some(string) = generator.next() {
+        return string;
+    }
+    String::from("random-name")
 }
 
 #[must_use]
@@ -82,11 +88,11 @@ pub fn get_ok_or_error(result: bool) -> String {
 }
 
 pub fn print_with_offset(str: &str) {
-    println!("[      ]: {}", str)
+    println!("[      ]: {}", str);
 }
 
 pub fn print_information(str: &str) {
-    println!("{}", format!("[{}]: {}", " INFO ".cyan(), str));
+    println!("[{}]: {}", " INFO ".cyan(), str);
 }
 
 pub fn print_message(message: &str, status: bool) {
@@ -97,70 +103,68 @@ pub fn print_message(message: &str, status: bool) {
 ///
 /// Will return `Err` if `filename` could not be written to
 pub fn append_to_file(filename: &str, line: String) -> io::Result<()> {
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(filename)
-        .unwrap_or_else(|_| panic!("can not open {} in append_to_file", filename));
-
-    let mut lines = BufReader::new(file)
-        .lines()
-        .filter_map(|l| match l {
-            Ok(line) => Some(line),
-            Err(_) => None,
-        })
-        .collect::<Vec<String>>();
-    lines.push(line);
-    fs::write(filename, lines.join("\n"))
+    if let Ok(file) = OpenOptions::new().read(true).write(true).open(filename) {
+        let mut lines = BufReader::new(file)
+            .lines()
+            .filter_map(|l| match l {
+                Ok(line) => Some(line),
+                Err(_) => None,
+            })
+            .collect::<Vec<String>>();
+        lines.push(line);
+        return fs::write(filename, lines.join("\n"));
+    }
+    return Err(std::io::Error::new(
+        ErrorKind::Other,
+        format!("can not open {} in append_to_file", filename),
+    ));
 }
 
 /// # Errors
 ///
 /// Will return `Err` if `filename` could not be written to
 pub fn remove_line_from_file(filename: &str, line: &str) -> io::Result<()> {
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(filename)
-        .unwrap_or_else(|_| panic!("can not open {} in remove_line_from_file", filename));
-
-    let lines = BufReader::new(file)
-        .lines()
-        .filter_map(|l| match l {
-            Ok(line) => Some(line),
-            Err(_) => None,
-        })
-        .filter(|l| !l.eq(&line))
-        .collect::<Vec<String>>()
-        .join("\n");
-    fs::write(filename, lines)
+    if let Ok(file) = OpenOptions::new().read(true).write(true).open(filename) {
+        let lines = BufReader::new(file)
+            .lines()
+            .filter_map(|l| match l {
+                Ok(line) => Some(line),
+                Err(_) => None,
+            })
+            .filter(|l| !l.eq(&line))
+            .collect::<Vec<String>>()
+            .join("\n");
+        return fs::write(filename, lines);
+    }
+    return Err(std::io::Error::new(
+        ErrorKind::Other,
+        format!("can not open {} in remove_line_from_file", filename),
+    ));
 }
 
 /// # Errors
 ///
 /// Will return `Err` if `filename` could not be written to
 pub fn remove_line_with_substring_from_file(filename: &str, substring: &str) -> io::Result<()> {
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(filename)
-        .unwrap_or_else(|_| {
-            panic!(
-                "can not open {} in remove_line_with_substring_from_file",
-                filename
-            )
-        });
-
-    let lines = BufReader::new(file)
-        .lines()
-        .filter_map(|l| match l {
-            Ok(line) => Some(line),
-            Err(_) => None,
-        })
-        .filter(|l| !l.contains(&substring))
-        .collect::<Vec<String>>()
-        .join("\n");
-    fs::write(filename, lines)
+    if let Ok(file) = OpenOptions::new().read(true).write(true).open(filename) {
+        let lines = BufReader::new(file)
+            .lines()
+            .filter_map(|l| match l {
+                Ok(line) => Some(line),
+                Err(_) => None,
+            })
+            .filter(|l| !l.contains(&substring))
+            .collect::<Vec<String>>()
+            .join("\n");
+        return fs::write(filename, lines);
+    }
+    return Err(std::io::Error::new(
+        ErrorKind::Other,
+        format!(
+            "can not open {} in remove_line_with_substring_from_file",
+            filename
+        ),
+    ));
 }
 
 /// # Errors
@@ -179,26 +183,27 @@ pub fn get_lines_from_file(filename: &str) -> Result<Vec<String>, std::io::Error
 ///
 /// Will return `Err` if `filename` could not be written to
 pub fn replace_in_file(filename: &str, needle: &str, replacement: &str) -> io::Result<()> {
-    let file = OpenOptions::new()
-        .read(true)
-        .write(true)
-        .open(filename)
-        .unwrap_or_else(|_| panic!("can not open {} in replace_in_file", filename));
-
-    let lines = BufReader::new(file)
-        .lines()
-        .map(|l| l.unwrap().replace(needle, replacement))
-        .collect::<Vec<String>>()
-        .join("\n");
-    fs::write(filename, lines)
+    if let Ok(file) = OpenOptions::new().read(true).write(true).open(filename) {
+        let lines = BufReader::new(file)
+            .lines()
+            .map_ok(|l| l.replace(needle, replacement))
+            .map(std::result::Result::unwrap)
+            .collect::<Vec<String>>()
+            .join("\n");
+        return fs::write(filename, lines);
+    }
+    return Err(std::io::Error::new(
+        ErrorKind::Other,
+        format!("can not open {} in replace_in_file", filename),
+    ));
 }
 
 #[must_use]
 pub fn read_line(prompt: &str) -> String {
     print!("{}: ", prompt);
-    io::stdout().flush().unwrap();
+    if let Ok(_flushed) = io::stdout().flush() {}
     let mut string = String::new();
-    io::stdin().read_line(&mut string).unwrap();
+    if let Ok(_flushed) = io::stdin().read_line(&mut string) {}
     string.replace("\n", "")
 }
 
@@ -208,18 +213,18 @@ pub fn get_cell_content_of_string(string: &str) -> Cell {
 }
 
 #[must_use]
-pub fn get_cell_content_of_option(content: &Option<String>) -> Cell {
+pub fn get_cell_content_of_option(content: &Option<String>) -> String {
     match content {
-        Some(string) => Cell::new(string.as_str()),
-        None => Cell::new("\u{2014}"),
+        Some(string) => String::from(string),
+        None => String::from("\u{2014}"),
     }
 }
 
 #[must_use]
-pub fn get_cell_content_of_date(content: &Option<NaiveDateTime>) -> Cell {
+pub fn get_cell_content_of_date(content: &Option<NaiveDateTime>) -> String {
     match content {
-        Some(date) => Cell::new(date.format("%Y-%m-%d %H:%M:%S").to_string().as_str()),
-        None => Cell::new("\u{2014}"),
+        Some(date) => date.format("%Y-%m-%d %H:%M:%S").to_string(),
+        None => String::from("\u{2014}"),
     }
 }
 
@@ -252,23 +257,28 @@ pub fn read_file(filename: &str) -> Result<String, std::io::Error> {
     for line in get_lines_from_file(filename)? {
         builder.append(line);
     }
-    Ok(builder.string().unwrap())
+    match builder.string() {
+        Ok(string) => Ok(string),
+        Err(e) => Err(std::io::Error::new(ErrorKind::Other, e)),
+    }
 }
 
 #[must_use]
 pub fn sha256sum_of_file(filepath: &str) -> Option<String> {
     let path = Path::new(filepath);
     if path.exists() {
-        let output = Command::new("sha256sum").arg(filepath).output().unwrap();
-        return if output.status.success() {
-            let sum = str::from_utf8(&output.stdout)
-                .unwrap()
-                .split(' ')
-                .collect::<Vec<&str>>();
-            Some(sum.first().unwrap().parse().unwrap())
-        } else {
-            None
-        };
+        if let Ok(output) = Command::new("sha256sum").arg(filepath).output() {
+            if output.status.success() {
+                if let Ok(str) = str::from_utf8(&output.stdout) {
+                    let sum = str.split(' ').collect::<Vec<&str>>();
+                    if let Some(sum) = sum.first() {
+                        if let Ok(sum) = sum.parse() {
+                            return Some(sum);
+                        }
+                    }
+                }
+            }
+        }
     }
     None
 }

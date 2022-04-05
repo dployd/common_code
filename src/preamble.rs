@@ -23,7 +23,7 @@ pub trait Preamble {
         for (key, value) in self.get_values() {
             crate::utils::add_indented_aligned_key_value(&mut builder, 2, 20, key, &value);
         }
-        builder.string().unwrap()
+        builder.string().unwrap_or_default()
     }
     /// # Errors
     ///

@@ -1,6 +1,7 @@
+use string_builder::Builder;
+
 use crate::provisioner::Types::{FILE, SHELL};
 use crate::utils;
-use string_builder::Builder;
 
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Types {
@@ -44,7 +45,7 @@ impl Provisioner {
             utils::vec_to_string(&self.command, true).as_str(),
         );
         utils::ident_and_append(&mut builder, "}\n", 2);
-        builder.string().unwrap()
+        builder.string().unwrap_or_default()
     }
 
     fn get_file(&self) -> String {
@@ -67,7 +68,7 @@ impl Provisioner {
             utils::quote(&source).as_str(),
         );
         utils::ident_and_append(&mut builder, "}\n", 2);
-        builder.string().unwrap()
+        builder.string().unwrap_or_default()
     }
 
     #[must_use]
@@ -85,8 +86,7 @@ fn parse_run(command: &str) -> Result<Provisioner, &'static str> {
     if command.is_empty() {
         Err("Could not parse Run provisioner")
     } else {
-        let mut vec = Vec::new();
-        vec.push(command.to_string());
+        let vec = vec![command.to_string()];
         Ok(Provisioner {
             provisioner: SHELL,
             command: vec,
@@ -97,9 +97,10 @@ fn parse_run(command: &str) -> Result<Provisioner, &'static str> {
 fn parse_file(command: &str) -> Result<Provisioner, &'static str> {
     let args: Vec<&str> = command.split_whitespace().collect::<Vec<&str>>();
     if args.len() == 2 {
-        let mut vec = Vec::new();
-        vec.push(args[0].to_string()); // source
-        vec.push(args[1].to_string()); // destination
+        let vec = vec![
+            args[0].to_string(), // source
+            args[1].to_string(), // destination
+        ];
         return Ok(Provisioner {
             provisioner: FILE,
             command: vec,
@@ -117,7 +118,7 @@ pub fn group(provisioners: &[Provisioner]) -> Vec<Provisioner> {
     };
     for provisioner in provisioners.iter() {
         if provisioner.provisioner == SHELL {
-            candidates.command.append(&mut provisioner.command.to_vec())
+            candidates.command.append(&mut provisioner.command.clone());
         }
         if provisioner.provisioner == FILE {
             if !candidates.command.is_empty() {
